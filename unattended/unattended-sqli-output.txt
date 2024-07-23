@@ -1,0 +1,5 @@
+Database version: 10.1.45-mariadb-0
+Database name: neddy
+Database user: nestedflanders
+All table names: ['config', 'customers', 'employees', 'filepath', 'idname', 'offices', 'orderdetails', 'orders', 'payments', 'productlines', 'products']
+Database columns: 
